@@ -264,3 +264,39 @@ group by customer_id;
 --  A           |         1720
 --  B           |         1760
 -- (2 rows)
+
+-- Recreate the following table output using the available data:
+-- (table as shown in the project overview document)
+
+select s.customer_id,
+    s.order_date,
+    men.product_name,
+    men.price,
+    CASE
+        WHEN s.order_date >= m.join_date THEN 'Y'
+        ELSE 'N'
+    END
+from sales s
+    LEFT JOIN menu men ON s.product_id = men.product_id
+    LEFT JOIN members m on m.customer_id = s.customer_id
+ORDER BY s.customer_id,
+    s.order_date;
+
+--  customer_id | order_date | product_name | price | case
+-- -------------+------------+--------------+-------+------
+--  A           | 2021-01-01 | sushi        |    10 | N
+--  A           | 2021-01-01 | curry        |    15 | N
+--  A           | 2021-01-07 | curry        |    15 | Y
+--  A           | 2021-01-10 | ramen        |    12 | Y
+--  A           | 2021-01-11 | ramen        |    12 | Y
+--  A           | 2021-01-11 | ramen        |    12 | Y
+--  B           | 2021-01-01 | curry        |    15 | N
+--  B           | 2021-01-02 | curry        |    15 | N
+--  B           | 2021-01-04 | sushi        |    10 | N
+--  B           | 2021-01-11 | sushi        |    10 | Y
+--  B           | 2021-01-16 | ramen        |    12 | Y
+--  B           | 2021-02-01 | ramen        |    12 | Y
+--  C           | 2021-01-01 | ramen        |    12 | N
+--  C           | 2021-01-01 | ramen        |    12 | N
+--  C           | 2021-01-07 | ramen        |    12 | N
+-- (15 rows)
