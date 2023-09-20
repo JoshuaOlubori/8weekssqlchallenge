@@ -118,5 +118,37 @@ select runner_id,
 from cte
 group by 1;
 -- 7. What is the successful delivery percentage for each runner?
-select *
-from runner_orders;
+
+with part as (
+    select cte.runner_id,
+        count(*) as part_cancel
+    from (
+            select runner_id,
+                nullif(cancellation, '') || nullif(cancellation, 'null') as cancel
+            from runner_orders
+        ) cte
+    where cancel is null
+    group by runner_id
+),
+whole as (
+    select runner_id,
+        count(*) as whole_cancel
+    from (
+            select runner_id,
+                nullif(cancellation, '') || nullif(cancellation, 'null') as cancel
+            from runner_orders
+        ) cte
+    group by runner_id
+)
+select p.runner_id,
+    case
+        when w.whole_cancel = 0 then null
+        else round(
+            (p.part_cancel::numeric / w.whole_cancel) * 100,
+            2
+        )
+    end as percent
+from part p
+    inner join whole w on p.runner_id = w.runner_id;
+
+
