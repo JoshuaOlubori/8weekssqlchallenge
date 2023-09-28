@@ -24,7 +24,9 @@ select case
     ro.pickup_time,
     co.order_time
 from customer_orders co
-    INNER JOIN runner_orders ro on co.order_id = ro.order_id --3 What was the average time in minutes it took for each runner to deliver pizzas?
+    INNER JOIN runner_orders ro on co.order_id = ro.order_id 
+    
+--3 What was the average time in minutes it took for each runner to deliver pizzas?
 select runner_id,
     round(
         avg(
