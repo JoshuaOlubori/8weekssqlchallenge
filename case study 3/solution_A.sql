@@ -23,8 +23,26 @@ where EXTRACT(
 group by 1;
 -- 4. What is the customer count and percentage of customers who have churned
 -- rounded to 1 decimal place?
+with cte1 as (
+    select 1 as id,
+        count(customer_id)::numeric as whole
+    from subscriptions
+),
+cte2 as (
+    select 1 as id,
+        count(customer_id)::numeric as part
+    from subscriptions
+    where plan_id = 4
+)
+SELECT cte1.whole as total_customers,
+    round(cte2.part / cte1.whole, 2) * 100 as pct_churned
+from cte1
+    natural join cte2;
+
 -- 5. How many customers have churned straight after their initial free trial - what
 -- percentage is this rounded to the nearest whole number?
+select * from subscriptions;
+select * from plans;
 -- 6. What is the number and percentage of customer plans after their initial free trial?
 -- 7. What is the customer count and percentage breakdown of all 5 plan_name values at
 -- 2020-12-31?
