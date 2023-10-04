@@ -43,9 +43,49 @@ from cte1
 -- percentage is this rounded to the nearest whole number?
 select * from subscriptions;
 select * from plans;
+
+with cte as (
+    -- using the lead window function to find the
+    -- preceding row to a particular row
+    select *,
+        lead(plan_id) over(partition by customer_id) as lead_plan_id
+    from subscriptions
+    order by customer_id,
+        plan_id
+),
+cte2 as (
+    -- getting rows whose values satisfy the condition in the question
+    select *
+    from cte
+    where plan_id = 0
+        and lead_plan_id = 4
+) -- solution
+select count(*) as count_of_customers_who_churned_after_free_trial
+from cte2
+
 -- 6. What is the number and percentage of customer plans after their initial free trial?
+select count(*) from subscriptions where plan_id <> 0;
+
+with cte1 as (
+    select 1 as id,
+        count(customer_id)::numeric as whole
+    from subscriptions
+),
+cte2 as (
+    select 1 as id,
+        count(customer_id)::numeric as part
+    from subscriptions
+    where plan_id <> 0
+)
+SELECT cte2.part as customer_count_after_trial_plan,
+    round(cte2.part / cte1.whole, 2) * 100 as pct_ccatp
+from cte1
+    natural join cte2;
 -- 7. What is the customer count and percentage breakdown of all 5 plan_name values at
 -- 2020-12-31?
+
+select * from subscriptions where start_date = '2020-12-31';
+
 -- 8. How many customers have upgraded to an annual plan in 2020?
 -- 9. How many days on average does it take for a customer to an annual plan from the
 -- day they join Foodie-Fi?
