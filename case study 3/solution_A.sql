@@ -38,12 +38,12 @@ SELECT cte1.whole as total_customers,
     round(cte2.part / cte1.whole, 2) * 100 as pct_churned
 from cte1
     natural join cte2;
-
 -- 5. How many customers have churned straight after their initial free trial - what
 -- percentage is this rounded to the nearest whole number?
-select * from subscriptions;
-select * from plans;
-
+select *
+from subscriptions;
+select *
+from plans;
 with cte as (
     -- using the lead window function to find the
     -- preceding row to a particular row
@@ -61,11 +61,10 @@ cte2 as (
         and lead_plan_id = 4
 ) -- solution
 select count(*) as count_of_customers_who_churned_after_free_trial
-from cte2
-
--- 6. What is the number and percentage of customer plans after their initial free trial?
-select count(*) from subscriptions where plan_id <> 0;
-
+from cte2 -- 6. What is the number and percentage of customer plans after their initial free trial?
+select count(*)
+from subscriptions
+where plan_id <> 0;
 with cte1 as (
     select 1 as id,
         count(customer_id)::numeric as whole
@@ -83,13 +82,55 @@ from cte1
     natural join cte2;
 -- 7. What is the customer count and percentage breakdown of all 5 plan_name values at
 -- 2020-12-31?
-
-select * from subscriptions where start_date = '2020-12-31';
-
+select *
+from subscriptions
+where start_date = '2020-12-31';
 -- 8. How many customers have upgraded to an annual plan in 2020?
--- 9. How many days on average does it take for a customer to an annual plan from the
+with cte1 as (
+    -- using the lead window function to find the
+    -- preceding row to a particular row
+    select *,
+        lead(plan_id) over(partition by customer_id) as lead_plan_id
+    from subscriptions
+    order by customer_id,
+        plan_id
+),
+-- filtering to only annual plans
+cte2 as (
+    select *,
+        lead_plan_id - plan_id as diff
+    from cte1
+    where lead_plan_id = 3
+) -- excluding churned customers and unupgraded plans
+select count(DISTINCT customer_id) as upgraded_customers_2020_count
+from cte2
+where (diff > 0)
+    and (lead_plan_id <> 4)
+    and EXTRACT(
+        year
+        from start_date
+    ) = 2020;
+-- 9. How many days on average does it take for a customer to upgrade to an annual plan from the
 -- day they join Foodie-Fi?
+with cte1 as (
+    select *,
+        max(plan_id) over (partition by customer_id) as highest_plan_suscribed,
+        max(start_date) over (partition by customer_id) as date_of_hps,
+        min(start_date) over (partition by customer_id) as date_of_lps,
+        row_number() over (partition by customer_id) as sn
+    from subscriptions
+),
+cte2 as(
+    select *,
+        date_of_hps - date_of_lps as diff_in_days
+    from cte1
+    where highest_plan_suscribed = 3
+        and sn = 1
+)
+select round(avg(diff_in_days)::numeric, 2) as avg_days_to_upgrade_to_annual
+from cte2 
+
 -- 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days,
--- 31-60 days etc)
--- 11. How many customers downgraded from a pro monthly to a basic monthly plan in
--- 2020?
+    -- 31-60 days etc)
+    -- 11. How many customers downgraded from a pro monthly to a basic monthly plan in
+    -- 2020?
