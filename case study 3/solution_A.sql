@@ -119,6 +119,9 @@ with cte1 as (
         min(start_date) over (partition by customer_id) as date_of_lps,
         row_number() over (partition by customer_id) as sn
     from subscriptions
+     order by customer_id,
+            start_date,
+            plan_id
 ),
 cte2 as(
     select *,
@@ -129,8 +132,31 @@ cte2 as(
 )
 select round(avg(diff_in_days)::numeric, 2) as avg_days_to_upgrade_to_annual
 from cte2 
-
 -- 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days,
     -- 31-60 days etc)
+
+
     -- 11. How many customers downgraded from a pro monthly to a basic monthly plan in
     -- 2020?
+    with cte1 as(
+        select *,
+            lead(plan_id) over(partition by customer_id) as lead_plan_id
+        from subscriptions
+        order by customer_id,
+            start_date,
+            plan_id
+    ),
+    cte2 as (
+        select customer_id,
+            plan_id,
+            lead_plan_id,
+            start_date
+        where plan_id = 2
+            and lead_plan_id = 1
+            and EXTRACT(
+                year
+                from start_date
+            ) = 2020
+    )
+select count(*) as number_of_customers_downgrade_from_prom_basm
+from cte2
